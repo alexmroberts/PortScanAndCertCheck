@@ -2,6 +2,7 @@ import socket
 import threading
 import ssl
 from queue import Queue
+import time
 
 q = Queue()
 max_threads = 100
@@ -9,6 +10,7 @@ starting_port = 1
 max_port = 445
 secure_ports = [22, 443, 465, 993, 995]
 print_errors = False
+connection_timeout = 5.0
 ports_failed = []
 
 
@@ -17,11 +19,12 @@ print("Checking ports \n")
 
 
 
+start_time = time.time()
 
 def port_scan(port):
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        connection = socket.create_connection((host, port))
+        connection = socket.create_connection((host, port), timeout=connection_timeout)
         with threading.Lock():
             print('Port', port, 'is open on', host)
             if port in secure_ports:
@@ -54,6 +57,8 @@ for worker in range(starting_port, max_port):
 
 q.join()
 
+
 if print_errors:
     for error in ports_failed:
         print(error)
+print("Scan took %.2f seconds" % (time.time() - start_time))
